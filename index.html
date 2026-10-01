@@ -14,31 +14,29 @@
   <!-- Firebase SDK (v9) -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getDatabase, ref, onValue, set, remove } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+    import { getDatabase, ref, onValue, set, remove, push } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
-      const firebaseConfig = {
-     apiKey: "AIzaSyAkHeWql7doRrCpIXoPqTC38roe_3VyX9I",
-  authDomain: "coffee-gacha.firebaseapp.com",
-  databaseURL: "https://coffee-gacha-default-rtdb.firebaseio.com",
-  projectId: "coffee-gacha",
-  storageBucket: "coffee-gacha.firebasestorage.app",
-  messagingSenderId: "694973306448",
-  appId: "1:694973306448:web:e59321af8fc9903aa4e355",
-  measurementId: "G-T2YG6JQWJ2"
+    const firebaseConfig = {
+      apiKey: "AIzaSyAkHeWql7doRrCpIXoPqTC38roe_3VyX9I",
+      authDomain: "coffee-gacha.firebaseapp.com",
+      databaseURL: "https://coffee-gacha-default-rtdb.firebaseio.com",
+      projectId: "coffee-gacha",
+      storageBucket: "coffee-gacha.firebasestorage.app",
+      messagingSenderId: "694973306448",
+      appId: "1:694973306448:web:e59321af8fc9903aa4e355",
+      measurementId: "G-T2YG6JQWJ2"
     };
 
-    // Firebase 초기화
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // 전역 변수 설정
     window.db = db;
     window.dbRef = ref;
     window.dbOnValue = onValue;
     window.dbSet = set;
     window.dbRemove = remove;
+    window.dbPush = push;
 
-    // 데이터베이스 실시간 수신 시작
     window.initFirebaseSync();
   </script>
 
@@ -181,9 +179,11 @@
       color: #717588;
       font-size: 13px;
     }
+    .day-header.sun { color: #e04850; }
+    .day-header.sat { color: #3b82f6; }
 
     .day-cell {
-      min-height: 95px;
+      min-height: 105px;
       background: rgba(255, 255, 255, 0.6);
       border: 1px solid rgba(0,0,0,0.05);
       border-radius: 16px;
@@ -192,6 +192,11 @@
       flex-direction: column;
       justify-content: flex-start;
       gap: 4px;
+      overflow: hidden;
+    }
+
+    .day-cell.is-off {
+      background: rgba(230, 225, 218, 0.5);
     }
 
     .day-number {
@@ -199,6 +204,29 @@
       font-weight: 700;
       color: #4a4e69;
     }
+    .day-cell.sun .day-number,
+    .day-cell.is-kr-holiday .day-number { color: #e04850; }
+    .day-cell.sat .day-number { color: #3b82f6; }
+
+    .holiday-badge-container {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      margin-bottom: 2px;
+    }
+
+    .holiday-badge {
+      font-size: 9px;
+      font-weight: 800;
+      padding: 2px 4px;
+      border-radius: 4px;
+      line-height: 1.1;
+      word-break: keep-all;
+    }
+    .badge-kr { background: #ffebee; color: #d32f2f; }
+    .badge-vn { background: #e8f5e9; color: #2e7d32; }
+    .badge-hk { background: #fff3e0; color: #ef6c00; }
+    .badge-ny { background: #e3f2fd; color: #1565c0; }
 
     .select-cafe {
       width: 100%;
@@ -210,6 +238,7 @@
       background: #ffffff;
       color: #111439;
       outline: none;
+      margin-top: auto;
     }
 
     .input-custom-cafe {
@@ -231,6 +260,92 @@
       height: 250px;
       width: 100%;
     }
+
+    /* 메모 보드 영역 */
+    .memo-input-container {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .memo-textarea {
+      flex: 1;
+      height: 60px;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid #dcd8c8;
+      outline: none;
+      font-family: inherit;
+      font-size: 14px;
+      resize: none;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+    }
+    .memo-textarea:focus { border-color: #111439; }
+
+    .btn-add-memo {
+      background: #4db6ac;
+      color: #fff;
+      border: none;
+      padding: 0 20px;
+      border-radius: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-add-memo:hover { background: #388e3c; }
+
+    .memo-board {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 15px;
+    }
+
+    .memo-card {
+      padding: 16px;
+      border-radius: 16px;
+      position: relative;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 120px;
+      word-break: break-all;
+      transition: transform 0.2s;
+    }
+    .memo-card:hover { transform: translateY(-3px); }
+
+    .memo-card-bg-0 { background: #fff9c4; color: #5d4037; } /* 노랑 */
+    .memo-card-bg-1 { background: #e1f5fe; color: #0277bd; } /* 파랑 */
+    .memo-card-bg-2 { background: #f8bbd0; color: #880e4f; } /* 분홍 */
+    .memo-card-bg-3 { background: #e8f5e9; color: #2e7d32; } /* 초록 */
+
+    .memo-content {
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.4;
+      white-space: pre-wrap;
+    }
+
+    .memo-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 12px;
+      font-size: 11px;
+      opacity: 0.7;
+    }
+
+    .btn-delete-memo {
+      background: transparent;
+      border: none;
+      color: currentColor;
+      font-weight: 800;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 50%;
+      line-height: 1;
+    }
+    .btn-delete-memo:hover { background: rgba(0,0,0,0.1); }
   </style>
 </head>
 <body>
@@ -257,6 +372,16 @@
     <div class="calendar-grid" id="calendar-grid"></div>
   </div>
 
+  <!-- 산책 메모장 보드 섹션 -->
+  <div class="card">
+    <h2 class="card-title">🚶‍♂️ Walk Note Board</h2>
+    <div class="memo-input-container">
+      <textarea id="memo-input" class="memo-textarea" placeholder="점심 산책 중 남기고 싶은 생각이나 메모를 적어보세요!"></textarea>
+      <button class="btn-add-memo" onclick="addMemo()">메모 추가</button>
+    </div>
+    <div class="memo-board" id="memo-board"></div>
+  </div>
+
   <!-- 차트 통계 섹션 -->
   <div class="card">
     <h2 class="card-title">📊 Visit Statistics</h2>
@@ -271,11 +396,62 @@
   const colors = ["#e04850", "#4db6ac", "#f4b41a", "#111439", "#8e24aa", "#ff7043", "#ab47bc", "#26a69a"];
   const textColors = ["#ffffff", "#ffffff", "#111439", "#ffffff", "#ffffff"];
   
+  // ------------------ 휴일 데이터 베이스 ------------------
+  const krHolidays = {
+    "2025-01-01": "신정",
+    "2025-01-28": "설날 연휴", "2025-01-29": "설날", "2025-01-30": "설날 연휴",
+    "2025-03-01": "삼일절", "2025-03-03": "대체공휴일",
+    "2025-05-05": "어린이날", "2025-05-06": "부처님오신날",
+    "2025-06-06": "현충일",
+    "2025-08-15": "광복절",
+    "2025-10-03": "개천절", "2025-10-05": "추석 연휴", "2025-10-06": "추석", "2025-10-07": "추석 연휴", "2025-10-08": "대체공휴일", "2025-10-09": "한글날",
+    "2025-12-25": "성탄절",
+    "2026-01-01": "신정",
+    "2026-02-16": "설날 연휴", "2026-02-17": "설날", "2026-02-18": "설날 연휴",
+    "2026-03-01": "삼일절", "2026-03-02": "대체공휴일",
+    "2026-05-05": "어린이날", "2026-05-24": "부처님오신날", "2026-05-25": "대체공휴일",
+    "2026-06-06": "현충일",
+    "2026-08-15": "광복절", "2026-08-17": "대체공휴일",
+    "2026-09-24": "추석 연휴", "2026-09-25": "추석", "2026-09-26": "추석 연휴",
+    "2026-10-03": "개천절", "2026-10-05": "대체공휴일", "2026-10-09": "한글날",
+    "2026-12-25": "성탄절"
+  };
+
+  const foreignHolidays = {
+    "VN": {
+      "2025-01-28": "Tet", "2025-01-29": "Tet", "2025-01-30": "Tet", "2025-01-31": "Tet",
+      "2025-04-07": "Hung Kings", "2025-04-30": "Reunification Day", "2025-05-01": "Labor Day",
+      "2025-09-02": "National Day",
+      "2026-02-16": "Tet", "2026-02-17": "Tet", "2026-02-18": "Tet", "2026-02-19": "Tet",
+      "2026-04-26": "Hung Kings", "2026-04-30": "Reunification Day", "2026-05-01": "Labor Day",
+      "2026-09-02": "National Day"
+    },
+    "HK": {
+      "2025-01-29": "Lunar New Year", "2025-01-30": "Lunar New Year", "2025-01-31": "Lunar New Year",
+      "2025-04-18": "Good Friday", "2025-04-21": "Easter Mon", "2025-05-05": "Buddha Birthday",
+      "2025-05-31": "Dragon Boat", "2025-07-01": "SAR Day", "2025-10-01": "National Day",
+      "2025-10-07": "Mid-Autumn", "2025-10-29": "Chung Yeung", "2025-12-25": "Christmas", "2025-12-26": "Boxing Day",
+      "2026-02-17": "Lunar New Year", "2026-02-18": "Lunar New Year", "2026-02-19": "Lunar New Year",
+      "2026-04-03": "Good Friday", "2026-04-06": "Easter Mon", "2026-05-24": "Buddha Birthday",
+      "2026-06-19": "Dragon Boat", "2026-07-01": "SAR Day", "2026-09-26": "Mid-Autumn",
+      "2026-10-01": "National Day", "2026-10-18": "Chung Yeung", "2026-12-25": "Christmas", "2026-12-26": "Boxing Day"
+    },
+    "NY": {
+      "2025-01-20": "MLK Day", "2025-02-17": "Presidents Day", "2025-05-26": "Memorial Day",
+      "2025-06-19": "Juneteenth", "2025-07-04": "Independence Day", "2025-09-01": "Labor Day",
+      "2025-10-13": "Columbus Day", "2025-11-11": "Veterans Day", "2025-11-27": "Thanksgiving",
+      "2026-01-19": "MLK Day", "2026-02-16": "Presidents Day", "2026-05-25": "Memorial Day",
+      "2026-06-19": "Juneteenth", "2026-07-03": "Independence Day", "2026-09-07": "Labor Day",
+      "2026-10-12": "Columbus Day", "2026-11-11": "Veterans Day", "2026-11-26": "Thanksgiving"
+    }
+  };
+
   let activeCafes = [...rouletteCafes];
   let currentRotation = 0;
   let isSpinning = false;
   let chartInstance = null;
-  let sharedLogs = {}; // 실시간 데이터 저장소
+  let sharedLogs = {};
+  let sharedMemos = {};
 
   function checkMonday() {
     const today = new Date();
@@ -341,13 +517,21 @@
     }, 3500);
   }
 
-  // ------------------ Firebase 실시간 동기화 ------------------
+  // ------------------ Firebase 동기화 ------------------
   window.initFirebaseSync = function() {
+    // 캘린더 방문 정보
     const logsRef = window.dbRef(window.db, 'cafe_logs');
     window.dbOnValue(logsRef, (snapshot) => {
       sharedLogs = snapshot.val() || {};
       renderCalendar();
       updateChart();
+    });
+
+    // 메모장 정보
+    const memoRef = window.dbRef(window.db, 'walk_memos');
+    window.dbOnValue(memoRef, (snapshot) => {
+      sharedMemos = snapshot.val() || {};
+      renderMemos();
     });
   };
 
@@ -358,6 +542,64 @@
     } else {
       window.dbRemove(logRef);
     }
+  }
+
+  // ------------------ 메모 기능 ------------------
+  function addMemo() {
+    const input = document.getElementById("memo-input");
+    const text = input.value.trim();
+    if (!text) return;
+
+    const memoRef = window.dbRef(window.db, 'walk_memos');
+    const now = new Date();
+    const timeString = `${now.getMonth()+1}/${now.getDate()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+    window.dbPush(memoRef, {
+      text: text,
+      timestamp: timeString,
+      colorIdx: Math.floor(Math.random() * 4)
+    });
+
+    input.value = "";
+  }
+
+  function deleteMemo(key) {
+    const memoRef = window.dbRef(window.db, `walk_memos/${key}`);
+    window.dbRemove(memoRef);
+  }
+
+  function renderMemos() {
+    const board = document.getElementById("memo-board");
+    board.innerHTML = "";
+
+    const entries = Object.entries(sharedMemos);
+    if (entries.length === 0) {
+      board.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: #888; font-size: 13px; padding: 20px 0;">아직 남겨진 메모가 없습니다. 첫 메모를 작성해 보세요!</div>`;
+      return;
+    }
+
+    entries.reverse().forEach(([key, memo]) => {
+      const card = document.createElement("div");
+      card.className = `memo-card memo-card-bg-${memo.colorIdx || 0}`;
+
+      const content = document.createElement("div");
+      content.className = "memo-content";
+      content.innerText = memo.text;
+
+      const footer = document.createElement("div");
+      footer.className = "memo-footer";
+      footer.innerHTML = `<span>${memo.timestamp || ''}</span>`;
+
+      const delBtn = document.createElement("button");
+      delBtn.className = "btn-delete-memo";
+      delBtn.innerText = "✕";
+      delBtn.onclick = () => deleteMemo(key);
+
+      footer.appendChild(delBtn);
+      card.appendChild(content);
+      card.appendChild(footer);
+      board.appendChild(card);
+    });
   }
 
   // ------------------ 캘린더 ------------------
@@ -373,9 +615,9 @@
     grid.innerHTML = "";
 
     const days = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
-    days.forEach(day => {
+    days.forEach((day, idx) => {
       const header = document.createElement("div");
-      header.className = "day-header";
+      header.className = `day-header ${idx === 0 ? 'sun' : idx === 6 ? 'sat' : ''}`;
       header.innerText = day;
       grid.appendChild(header);
     });
@@ -393,75 +635,121 @@
       const cell = document.createElement("div");
       cell.className = "day-cell";
 
+      const dateObj = new Date(year, month, date);
+      const dayOfWeek = dateObj.getDay();
+      const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
+
+      const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+      const krHolidayName = krHolidays[dateKey];
+      const isKrHoliday = !!krHolidayName;
+      const isDayOff = isWeekend || isKrHoliday;
+
+      if (dayOfWeek === 0) cell.classList.add("sun");
+      if (dayOfWeek === 6) cell.classList.add("sat");
+      if (isKrHoliday) cell.classList.add("is-kr-holiday");
+      if (isDayOff) cell.classList.add("is-off");
+
       const dateNum = document.createElement("div");
       dateNum.className = "day-number";
       dateNum.innerText = date;
       cell.appendChild(dateNum);
 
-      const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
-      const savedData = sharedLogs[dateKey] || "";
+      const badgeContainer = document.createElement("div");
+      badgeContainer.className = "holiday-badge-container";
 
-      let savedType = savedData;
-      let savedCustomName = "";
-      if (savedData.startsWith("기타:")) {
-        savedType = "기타";
-        savedCustomName = savedData.replace("기타:", "");
+      if (krHolidayName) {
+        const b = document.createElement("div");
+        b.className = "holiday-badge badge-kr";
+        b.innerText = `🇰🇷 ${krHolidayName}`;
+        badgeContainer.appendChild(b);
       }
 
-      const select = document.createElement("select");
-      select.className = "select-cafe";
-      
-      const defaultOpt = document.createElement("option");
-      defaultOpt.value = "";
-      defaultOpt.innerText = "Select";
-      select.appendChild(defaultOpt);
+      if (foreignHolidays.VN[dateKey]) {
+        const b = document.createElement("div");
+        b.className = "holiday-badge badge-vn";
+        b.innerText = `🇻🇳 ${foreignHolidays.VN[dateKey]}`;
+        badgeContainer.appendChild(b);
+      }
+      if (foreignHolidays.HK[dateKey]) {
+        const b = document.createElement("div");
+        b.className = "holiday-badge badge-hk";
+        b.innerText = `🇭🇰 ${foreignHolidays.HK[dateKey]}`;
+        badgeContainer.appendChild(b);
+      }
+      if (foreignHolidays.NY[dateKey]) {
+        const b = document.createElement("div");
+        b.className = "holiday-badge badge-ny";
+        b.innerText = `🇺🇸 ${foreignHolidays.NY[dateKey]}`;
+        badgeContainer.appendChild(b);
+      }
 
-      rouletteCafes.forEach(cafe => {
-        const opt = document.createElement("option");
-        opt.value = cafe;
-        opt.innerText = cafe;
-        if (cafe === savedType) opt.selected = true;
-        select.appendChild(opt);
-      });
+      cell.appendChild(badgeContainer);
 
-      const etcOpt = document.createElement("option");
-      etcOpt.value = "기타";
-      etcOpt.innerText = "기타 (직접입력)";
-      if (savedType === "기타") etcOpt.selected = true;
-      select.appendChild(etcOpt);
+      if (!isDayOff) {
+        const savedData = sharedLogs[dateKey] || "";
+        let savedType = savedData;
+        let savedCustomName = "";
+        if (savedData.startsWith("기타:")) {
+          savedType = "기타";
+          savedCustomName = savedData.replace("기타:", "");
+        }
 
-      const customInput = document.createElement("input");
-      customInput.type = "text";
-      customInput.className = "input-custom-cafe";
-      customInput.placeholder = "카페명 입력";
-      customInput.value = savedCustomName;
-      customInput.style.display = savedType === "기타" ? "block" : "none";
+        const select = document.createElement("select");
+        select.className = "select-cafe";
+        
+        const defaultOpt = document.createElement("option");
+        defaultOpt.value = "";
+        defaultOpt.innerText = "Select";
+        select.appendChild(defaultOpt);
 
-      select.onchange = (e) => {
-        const val = e.target.value;
-        if (val === "기타") {
-          customInput.style.display = "block";
-          customInput.focus();
-          if (customInput.value.trim()) {
-            saveLog(dateKey, `기타:${customInput.value.trim()}`);
+        rouletteCafes.forEach(cafe => {
+          const opt = document.createElement("option");
+          opt.value = cafe;
+          opt.innerText = cafe;
+          if (cafe === savedType) opt.selected = true;
+          select.appendChild(opt);
+        });
+
+        const etcOpt = document.createElement("option");
+        etcOpt.value = "기타";
+        etcOpt.innerText = "기타 (직접입력)";
+        if (savedType === "기타") etcOpt.selected = true;
+        select.appendChild(etcOpt);
+
+        const customInput = document.createElement("input");
+        customInput.type = "text";
+        customInput.className = "input-custom-cafe";
+        customInput.placeholder = "카페명 입력";
+        customInput.value = savedCustomName;
+        customInput.style.display = savedType === "기타" ? "block" : "none";
+
+        select.onchange = (e) => {
+          const val = e.target.value;
+          if (val === "기타") {
+            customInput.style.display = "block";
+            customInput.focus();
+            if (customInput.value.trim()) {
+              saveLog(dateKey, `기타:${customInput.value.trim()}`);
+            }
+          } else {
+            customInput.style.display = "none";
+            saveLog(dateKey, val);
           }
-        } else {
-          customInput.style.display = "none";
-          saveLog(dateKey, val);
-        }
-      };
+        };
 
-      customInput.oninput = (e) => {
-        const customVal = e.target.value.trim();
-        if (customVal) {
-          saveLog(dateKey, `기타:${customVal}`);
-        } else {
-          saveLog(dateKey, "기타:");
-        }
-      };
+        customInput.oninput = (e) => {
+          const customVal = e.target.value.trim();
+          if (customVal) {
+            saveLog(dateKey, `기타:${customVal}`);
+          } else {
+            saveLog(dateKey, "기타:");
+          }
+        };
 
-      cell.appendChild(select);
-      cell.appendChild(customInput);
+        cell.appendChild(select);
+        cell.appendChild(customInput);
+      }
+
       grid.appendChild(cell);
     }
   }
