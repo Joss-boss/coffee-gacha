@@ -11,11 +11,41 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+  <!-- Firebase SDK (v9) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getDatabase, ref, onValue, set, remove } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+
+      const firebaseConfig = {
+     apiKey: "AIzaSyAkHeWql7doRrCpIXoPqTC38roe_3VyX9I",
+  authDomain: "coffee-gacha.firebaseapp.com",
+  databaseURL: "https://coffee-gacha-default-rtdb.firebaseio.com",
+  projectId: "coffee-gacha",
+  storageBucket: "coffee-gacha.firebasestorage.app",
+  messagingSenderId: "694973306448",
+  appId: "1:694973306448:web:e59321af8fc9903aa4e355",
+  measurementId: "G-T2YG6JQWJ2"
+    };
+
+    // Firebase 초기화
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // 전역 변수 설정
+    window.db = db;
+    window.dbRef = ref;
+    window.dbOnValue = onValue;
+    window.dbSet = set;
+    window.dbRemove = remove;
+
+    // 데이터베이스 실시간 수신 시작
+    window.initFirebaseSync();
+  </script>
+
   <style>
     * { box-sizing: border-box; }
     body {
       font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
-      /* 참고 이미지 특유의 울퉁불퉁하고 독특한 노이즈 텍스처 배경 */
       background: #e2ded4;
       background-image: 
         radial-gradient(at 10% 20%, rgba(224, 98, 88, 0.25) 0px, transparent 50%),
@@ -29,14 +59,13 @@
     }
 
     .container {
-      max-width: 780px;
+      max-width: 850px;
       margin: 0 auto;
       display: flex;
       flex-direction: column;
       gap: 28px;
     }
 
-    /* 유기적인 비대칭 모서리와 깊이감 있는 카드 스타일 */
     .card {
       background: rgba(255, 255, 255, 0.88);
       backdrop-filter: blur(12px);
@@ -89,7 +118,6 @@
       transition: transform 3.5s cubic-bezier(0.12, 0.8, 0.15, 1);
     }
 
-    /* 감각적인 비대칭 형태의 독특한 버튼 디자인 */
     .btn-action {
       background: #111439;
       color: #f7f9fc;
@@ -155,14 +183,15 @@
     }
 
     .day-cell {
-      min-height: 80px;
+      min-height: 95px;
       background: rgba(255, 255, 255, 0.6);
       border: 1px solid rgba(0,0,0,0.05);
       border-radius: 16px;
-      padding: 8px;
+      padding: 6px;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
+      justify-content: flex-start;
+      gap: 4px;
     }
 
     .day-number {
@@ -175,8 +204,7 @@
       width: 100%;
       font-size: 11px;
       font-weight: 700;
-      margin-top: 6px;
-      padding: 4px;
+      padding: 3px;
       border-radius: 8px;
       border: 1px solid #dcd8c8;
       background: #ffffff;
@@ -184,12 +212,23 @@
       outline: none;
     }
 
+    .input-custom-cafe {
+      width: 100%;
+      font-size: 11px;
+      padding: 4px;
+      border-radius: 6px;
+      border: 1px solid #e04850;
+      background: #fff;
+      outline: none;
+      box-sizing: border-box;
+    }
+
     .empty-cell { background: transparent; border: none; }
 
     /* 차트 영역 */
     .chart-container {
       position: relative;
-      height: 240px;
+      height: 250px;
       width: 100%;
     }
   </style>
@@ -228,22 +267,22 @@
 </div>
 
 <script>
-  // 아트워크 색상 팔레트 적용 (딥 네이비, 레드, 민트, 테라코타, 퍼플)
-  const allCafes = ["베르시", "카인드오브브루", "우지커피", "옾튼", "아프리쿠스"];
-  const colors = ["#e04850", "#4db6ac", "#f4b41a", "#111439", "#8e24aa"];
+  const rouletteCafes = ["베르시", "카인드오브브루", "우지커피", "옾튼", "아프리쿠스"];
+  const colors = ["#e04850", "#4db6ac", "#f4b41a", "#111439", "#8e24aa", "#ff7043", "#ab47bc", "#26a69a"];
   const textColors = ["#ffffff", "#ffffff", "#111439", "#ffffff", "#ffffff"];
   
-  let activeCafes = [...allCafes];
+  let activeCafes = [...rouletteCafes];
   let currentRotation = 0;
   let isSpinning = false;
   let chartInstance = null;
+  let sharedLogs = {}; // 실시간 데이터 저장소
 
   function checkMonday() {
     const today = new Date();
     if (today.getDay() === 1) {
-      activeCafes = allCafes.filter(c => c !== "베르시");
+      activeCafes = rouletteCafes.filter(c => c !== "베르시");
     } else {
-      activeCafes = [...allCafes];
+      activeCafes = [...rouletteCafes];
     }
   }
 
@@ -267,7 +306,7 @@
       ctx.translate(135, 135);
       ctx.rotate(angle + arc / 2);
       ctx.textAlign = "right";
-      ctx.fillStyle = textColors[i % textColors.length];
+      ctx.fillStyle = textColors[i % textColors.length] || "#ffffff";
       ctx.font = "bold 14px 'Plus Jakarta Sans', sans-serif";
       ctx.fillText(activeCafes[i], 115, 5);
       ctx.restore();
@@ -300,6 +339,25 @@
       
       document.getElementById("result").innerText = `✨ 오늘 추천 카페: [ ${selectedCafe} ]` + noteText;
     }, 3500);
+  }
+
+  // ------------------ Firebase 실시간 동기화 ------------------
+  window.initFirebaseSync = function() {
+    const logsRef = window.dbRef(window.db, 'cafe_logs');
+    window.dbOnValue(logsRef, (snapshot) => {
+      sharedLogs = snapshot.val() || {};
+      renderCalendar();
+      updateChart();
+    });
+  };
+
+  function saveLog(dateKey, value) {
+    const logRef = window.dbRef(window.db, `cafe_logs/${dateKey}`);
+    if (value) {
+      window.dbSet(logRef, value);
+    } else {
+      window.dbRemove(logRef);
+    }
   }
 
   // ------------------ 캘린더 ------------------
@@ -340,8 +398,15 @@
       dateNum.innerText = date;
       cell.appendChild(dateNum);
 
-      const dateKey = `cafe_log_${year}-${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
-      const savedCafe = localStorage.getItem(dateKey) || "";
+      const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
+      const savedData = sharedLogs[dateKey] || "";
+
+      let savedType = savedData;
+      let savedCustomName = "";
+      if (savedData.startsWith("기타:")) {
+        savedType = "기타";
+        savedCustomName = savedData.replace("기타:", "");
+      }
 
       const select = document.createElement("select");
       select.className = "select-cafe";
@@ -351,25 +416,52 @@
       defaultOpt.innerText = "Select";
       select.appendChild(defaultOpt);
 
-      allCafes.forEach(cafe => {
+      rouletteCafes.forEach(cafe => {
         const opt = document.createElement("option");
         opt.value = cafe;
         opt.innerText = cafe;
-        if (cafe === savedCafe) opt.selected = true;
+        if (cafe === savedType) opt.selected = true;
         select.appendChild(opt);
       });
 
+      const etcOpt = document.createElement("option");
+      etcOpt.value = "기타";
+      etcOpt.innerText = "기타 (직접입력)";
+      if (savedType === "기타") etcOpt.selected = true;
+      select.appendChild(etcOpt);
+
+      const customInput = document.createElement("input");
+      customInput.type = "text";
+      customInput.className = "input-custom-cafe";
+      customInput.placeholder = "카페명 입력";
+      customInput.value = savedCustomName;
+      customInput.style.display = savedType === "기타" ? "block" : "none";
+
       select.onchange = (e) => {
         const val = e.target.value;
-        if (val) {
-          localStorage.setItem(dateKey, val);
+        if (val === "기타") {
+          customInput.style.display = "block";
+          customInput.focus();
+          if (customInput.value.trim()) {
+            saveLog(dateKey, `기타:${customInput.value.trim()}`);
+          }
         } else {
-          localStorage.removeItem(dateKey);
+          customInput.style.display = "none";
+          saveLog(dateKey, val);
         }
-        updateChart();
+      };
+
+      customInput.oninput = (e) => {
+        const customVal = e.target.value.trim();
+        if (customVal) {
+          saveLog(dateKey, `기타:${customVal}`);
+        } else {
+          saveLog(dateKey, "기타:");
+        }
       };
 
       cell.appendChild(select);
+      cell.appendChild(customInput);
       grid.appendChild(cell);
     }
   }
@@ -382,33 +474,40 @@
   // ------------------ 차트 ------------------
   function updateChart() {
     const counts = {};
-    allCafes.forEach(cafe => counts[cafe] = 0);
+    rouletteCafes.forEach(cafe => counts[cafe] = 0);
 
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key.startsWith("cafe_log_")) {
-        const cafeName = localStorage.getItem(key);
-        if (counts.hasOwnProperty(cafeName)) {
-          counts[cafeName]++;
-        }
+    Object.values(sharedLogs).forEach(cafeName => {
+      let name = cafeName;
+      if (name.startsWith("기타:")) {
+        name = name.replace("기타:", "").trim();
       }
-    }
+      if (name) {
+        if (!counts.hasOwnProperty(name)) {
+          counts[name] = 0;
+        }
+        counts[name]++;
+      }
+    });
 
-    const dataValues = allCafes.map(cafe => counts[cafe]);
+    const labels = Object.keys(counts);
+    const dataValues = labels.map(label => counts[label]);
+    const bgColors = labels.map((_, idx) => colors[idx % colors.length]);
 
     if (chartInstance) {
+      chartInstance.data.labels = labels;
       chartInstance.data.datasets[0].data = dataValues;
+      chartInstance.data.datasets[0].backgroundColor = bgColors;
       chartInstance.update();
     } else {
       const ctx = document.getElementById('visitChart').getContext('2d');
       chartInstance = new Chart(ctx, {
         type: 'bar',
         data: {
-          labels: allCafes,
+          labels: labels,
           datasets: [{
             label: 'Visits',
             data: dataValues,
-            backgroundColor: colors,
+            backgroundColor: bgColors,
             borderRadius: 12,
             borderSkipped: false
           }]
@@ -438,7 +537,6 @@
   checkMonday();
   drawWheel();
   renderCalendar();
-  updateChart();
 </script>
 
 </body>
