@@ -57,7 +57,7 @@
     }
 
     .container {
-      max-width: 850px;
+      max-width: 920px;
       margin: 0 auto;
       display: flex;
       flex-direction: column;
@@ -87,16 +87,19 @@
 
     /* 룰렛 스타일 */
     .roulette-section { text-align: center; }
-    .roulette-container {
+    .roulette-wrapper {
       position: relative;
-      width: 270px;
-      height: 270px;
+      width: 290px;
+      height: 290px;
       margin: 25px auto;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
 
     .pointer {
       position: absolute;
-      top: -12px;
+      top: -10px;
       left: 50%;
       transform: translateX(-50%);
       width: 0;
@@ -104,16 +107,36 @@
       border-left: 14px solid transparent;
       border-right: 14px solid transparent;
       border-top: 24px solid #111439;
-      z-index: 10;
+      z-index: 12;
       filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
     }
 
     #wheel {
-      width: 100%;
-      height: 100%;
+      width: 280px;
+      height: 280px;
       border-radius: 50%;
       box-shadow: 0 8px 24px rgba(0,0,0,0.12);
       transition: transform 3.5s cubic-bezier(0.12, 0.8, 0.15, 1);
+    }
+
+    .wheel-center-stamp {
+      position: absolute;
+      width: 70px;
+      height: 70px;
+      background: #ffffff;
+      border-radius: 50%;
+      z-index: 10;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+      border: 3px solid #111439;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .wheel-center-stamp img {
+      width: 58px;
+      height: 58px;
     }
 
     .btn-action {
@@ -169,7 +192,7 @@
     .calendar-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
-      gap: 8px;
+      gap: 6px;
     }
 
     .day-header {
@@ -232,7 +255,7 @@
       width: 100%;
       font-size: 11px;
       font-weight: 700;
-      padding: 3px;
+      padding: 5px;
       border-radius: 8px;
       border: 1px solid #dcd8c8;
       background: #ffffff;
@@ -243,13 +266,14 @@
 
     .input-custom-cafe {
       width: 100%;
-      font-size: 11px;
+      font-size: 10px;
       padding: 4px;
       border-radius: 6px;
       border: 1px solid #e04850;
       background: #fff;
       outline: none;
       box-sizing: border-box;
+      margin-top: 3px;
     }
 
     .empty-cell { background: transparent; border: none; }
@@ -314,10 +338,10 @@
     }
     .memo-card:hover { transform: translateY(-3px); }
 
-    .memo-card-bg-0 { background: #fff9c4; color: #5d4037; } /* 노랑 */
-    .memo-card-bg-1 { background: #e1f5fe; color: #0277bd; } /* 파랑 */
-    .memo-card-bg-2 { background: #f8bbd0; color: #880e4f; } /* 분홍 */
-    .memo-card-bg-3 { background: #e8f5e9; color: #2e7d32; } /* 초록 */
+    .memo-card-bg-0 { background: #fff9c4; color: #5d4037; }
+    .memo-card-bg-1 { background: #e1f5fe; color: #0277bd; }
+    .memo-card-bg-2 { background: #f8bbd0; color: #880e4f; }
+    .memo-card-bg-3 { background: #e8f5e9; color: #2e7d32; }
 
     .memo-content {
       font-size: 14px;
@@ -354,9 +378,12 @@
   <!-- 룰렛 섹션 -->
   <div class="card roulette-section">
     <h2 class="card-title" style="justify-content: center;">🎨 Today's Cafe Roulette</h2>
-    <div class="roulette-container">
+    <div class="roulette-wrapper">
       <div class="pointer"></div>
-      <canvas id="wheel" width="270" height="270"></canvas>
+      <canvas id="wheel" width="280" height="280"></canvas>
+      <div class="wheel-center-stamp">
+        <img id="stamp-center-img" src="" alt="Stamp">
+      </div>
     </div>
     <button class="btn-action" id="spin-btn" onclick="spinWheel()">SPIN THE WHEEL</button>
     <div id="result">버튼을 눌러 오늘 갈 카페를 뽑아보세요!</div>
@@ -393,9 +420,17 @@
 
 <script>
   const rouletteCafes = ["베르시", "카인드오브브루", "우지커피", "옾튼", "아프리쿠스"];
-  const colors = ["#e04850", "#4db6ac", "#f4b41a", "#111439", "#8e24aa", "#ff7043", "#ab47bc", "#26a69a"];
-  const textColors = ["#ffffff", "#ffffff", "#111439", "#ffffff", "#ffffff"];
+  const colors = ["#d32f2f", "#1976d2", "#388e3c", "#7b1fa2", "#f4b41a"];
+  const textColors = ["#ffffff", "#ffffff", "#ffffff", "#ffffff", "#111439"];
   
+  // 캐릭터 원형 스탬프 SVG
+  const stampSVGs = [
+    "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='none' stroke='%23d32f2f' stroke-width='6'/><path d='M25 45 C 20 20, 80 20, 75 45 C 75 70, 85 75, 85 75' fill='none' stroke='%23d32f2f' stroke-width='4'/><path d='M25 45 C 20 70, 15 75, 15 75' fill='none' stroke='%23d32f2f' stroke-width='4'/><circle cx='40' cy='48' r='3.5' fill='%23d32f2f'/><circle cx='60' cy='48' r='3.5' fill='%23d32f2f'/><path d='M43 58 Q50 64 57 58' stroke='%23d32f2f' stroke-width='3' fill='none' stroke-linecap='round'/><path d='M68 62 L74 50 L80 62' stroke='%23d32f2f' stroke-width='3.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/><path d='M20 40 Q15 35 15 40 Q15 45 20 40 Z' fill='%23d32f2f'/><path d='M80 40 Q85 35 85 40 Q85 45 80 40 Z' fill='%23d32f2f'/></svg>",
+    "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='none' stroke='%231976d2' stroke-width='6'/><path d='M28 40 C 25 18, 75 18, 72 40 L75 75' fill='none' stroke='%231976d2' stroke-width='4'/><circle cx='38' cy='46' r='8' fill='none' stroke='%231976d2' stroke-width='3'/><circle cx='62' cy='46' r='8' fill='none' stroke='%231976d2' stroke-width='3'/><line x1='46' y1='46' x2='54' y2='46' stroke='%231976d2' stroke-width='3'/><path d='M44 60 Q50 65 56 60' stroke='%231976d2' stroke-width='3' fill='none' stroke-linecap='round'/><rect x='28' y='64' width='22' height='16' rx='2' fill='none' stroke='%231976d2' stroke-width='3'/><path d='M22 35 L20 28 L24 31' stroke='%231976d2' stroke-width='2.5' stroke-linecap='round'/><path d='M78 35 L80 28 L76 31' stroke='%231976d2' stroke-width='2.5' stroke-linecap='round'/></svg>",
+    "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='none' stroke='%23388e3c' stroke-width='6'/><path d='M30 32 C20 40 25 60 20 75' fill='none' stroke='%23388e3c' stroke-width='4' stroke-linecap='round'/><path d='M70 32 C80 40 75 60 80 75' fill='none' stroke='%23388e3c' stroke-width='4' stroke-linecap='round'/><circle cx='40' cy='46' r='3.5' fill='%23388e3c'/><circle cx='60' cy='46' r='3.5' fill='%23388e3c'/><path d='M43 56 Q50 62 57 56' stroke='%23388e3c' stroke-width='3' fill='none' stroke-linecap='round'/><rect x='32' y='60' width='12' height='16' rx='2' fill='none' stroke='%23388e3c' stroke-width='3'/><path d='M76 35 Q80 30 80 35 Q80 40 76 35 Z' fill='%23388e3c'/></svg>",
+    "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='none' stroke='%237b1fa2' stroke-width='6'/><circle cx='50' cy='20' r='11' fill='none' stroke='%237b1fa2' stroke-width='4'/><path d='M30 40 C28 28 72 28 70 40 L74 72' fill='none' stroke='%237b1fa2' stroke-width='4'/><circle cx='40' cy='48' r='3.5' fill='%237b1fa2'/><circle cx='60' cy='48' r='3.5' fill='%237b1fa2'/><path d='M44 58 Q50 63 56 58' stroke='%237b1fa2' stroke-width='3' fill='none' stroke-linecap='round'/><path d='M34 68 Q40 60 45 68' stroke='%237b1fa2' stroke-width='3' fill='none' stroke-linecap='round'/><path d='M66 68 Q60 60 55 68' stroke='%237b1fa2' stroke-width='3' fill='none' stroke-linecap='round'/><path d='M20 45 Q15 40 15 45 Q15 50 20 45 Z' fill='%237b1fa2'/><path d='M80 45 Q85 40 85 45 Q85 50 80 45 Z' fill='%237b1fa2'/></svg>"
+  ];
+
   // ------------------ 휴일 데이터 베이스 ------------------
   const krHolidays = {
     "2025-01-01": "신정",
@@ -452,6 +487,13 @@
   let chartInstance = null;
   let sharedLogs = {};
   let sharedMemos = {};
+  let stampIdx = 0;
+
+  function setCenterStamp() {
+    const img = document.getElementById("stamp-center-img");
+    img.src = stampSVGs[stampIdx];
+    stampIdx = (stampIdx + 1) % stampSVGs.length;
+  }
 
   function checkMonday() {
     const today = new Date();
@@ -474,17 +516,17 @@
       const angle = i * arc;
       ctx.beginPath();
       ctx.fillStyle = colors[i % colors.length];
-      ctx.moveTo(135, 135);
-      ctx.arc(135, 135, 135, angle, angle + arc);
+      ctx.moveTo(140, 140);
+      ctx.arc(140, 140, 140, angle, angle + arc);
       ctx.fill();
 
       ctx.save();
-      ctx.translate(135, 135);
+      ctx.translate(140, 140);
       ctx.rotate(angle + arc / 2);
       ctx.textAlign = "right";
       ctx.fillStyle = textColors[i % textColors.length] || "#ffffff";
-      ctx.font = "bold 14px 'Plus Jakarta Sans', sans-serif";
-      ctx.fillText(activeCafes[i], 115, 5);
+      ctx.font = "bold 15px 'Plus Jakarta Sans', sans-serif";
+      ctx.fillText(activeCafes[i], 120, 5);
       ctx.restore();
     }
   }
@@ -493,6 +535,8 @@
     if (isSpinning) return;
     isSpinning = true;
     document.getElementById("spin-btn").disabled = true;
+
+    setCenterStamp();
 
     const canvas = document.getElementById("wheel");
     const numOptions = activeCafes.length;
@@ -519,7 +563,6 @@
 
   // ------------------ Firebase 동기화 ------------------
   window.initFirebaseSync = function() {
-    // 캘린더 방문 정보
     const logsRef = window.dbRef(window.db, 'cafe_logs');
     window.dbOnValue(logsRef, (snapshot) => {
       sharedLogs = snapshot.val() || {};
@@ -527,7 +570,6 @@
       updateChart();
     });
 
-    // 메모장 정보
     const memoRef = window.dbRef(window.db, 'walk_memos');
     window.dbOnValue(memoRef, (snapshot) => {
       sharedMemos = snapshot.val() || {};
@@ -685,13 +727,15 @@
 
       cell.appendChild(badgeContainer);
 
+      // 평일일 때만 카페 선택 드롭다운 생성
       if (!isDayOff) {
-        const savedData = sharedLogs[dateKey] || "";
-        let savedType = savedData;
-        let savedCustomName = "";
-        if (savedData.startsWith("기타:")) {
+        const savedCafe = sharedLogs[dateKey] || "";
+        let savedType = typeof savedCafe === 'string' ? savedCafe : (savedCafe.cafe || "");
+        let savedCustomCafeName = "";
+
+        if (savedType.startsWith("기타:")) {
+          savedCustomCafeName = savedType.replace("기타:", "");
           savedType = "기타";
-          savedCustomName = savedData.replace("기타:", "");
         }
 
         const select = document.createElement("select");
@@ -699,7 +743,7 @@
         
         const defaultOpt = document.createElement("option");
         defaultOpt.value = "";
-        defaultOpt.innerText = "Select";
+        defaultOpt.innerText = "Select Cafe";
         select.appendChild(defaultOpt);
 
         rouletteCafes.forEach(cafe => {
@@ -716,28 +760,28 @@
         if (savedType === "기타") etcOpt.selected = true;
         select.appendChild(etcOpt);
 
-        const customInput = document.createElement("input");
-        customInput.type = "text";
-        customInput.className = "input-custom-cafe";
-        customInput.placeholder = "카페명 입력";
-        customInput.value = savedCustomName;
-        customInput.style.display = savedType === "기타" ? "block" : "none";
+        const customCafeInput = document.createElement("input");
+        customCafeInput.type = "text";
+        customCafeInput.className = "input-custom-cafe";
+        customCafeInput.placeholder = "카페명 입력";
+        customCafeInput.value = savedCustomCafeName;
+        customCafeInput.style.display = savedType === "기타" ? "block" : "none";
 
         select.onchange = (e) => {
           const val = e.target.value;
           if (val === "기타") {
-            customInput.style.display = "block";
-            customInput.focus();
-            if (customInput.value.trim()) {
-              saveLog(dateKey, `기타:${customInput.value.trim()}`);
+            customCafeInput.style.display = "block";
+            customCafeInput.focus();
+            if (customCafeInput.value.trim()) {
+              saveLog(dateKey, `기타:${customCafeInput.value.trim()}`);
             }
           } else {
-            customInput.style.display = "none";
+            customCafeInput.style.display = "none";
             saveLog(dateKey, val);
           }
         };
 
-        customInput.oninput = (e) => {
+        customCafeInput.oninput = (e) => {
           const customVal = e.target.value.trim();
           if (customVal) {
             saveLog(dateKey, `기타:${customVal}`);
@@ -747,7 +791,7 @@
         };
 
         cell.appendChild(select);
-        cell.appendChild(customInput);
+        cell.appendChild(customCafeInput);
       }
 
       grid.appendChild(cell);
@@ -764,16 +808,20 @@
     const counts = {};
     rouletteCafes.forEach(cafe => counts[cafe] = 0);
 
-    Object.values(sharedLogs).forEach(cafeName => {
-      let name = cafeName;
-      if (name.startsWith("기타:")) {
-        name = name.replace("기타:", "").trim();
-      }
-      if (name) {
-        if (!counts.hasOwnProperty(name)) {
-          counts[name] = 0;
+    Object.values(sharedLogs).forEach(dayData => {
+      let cafeName = typeof dayData === 'string' ? dayData : (dayData ? dayData.cafe : "");
+
+      if (cafeName) {
+        let name = cafeName;
+        if (name.startsWith("기타:")) {
+          name = name.replace("기타:", "").trim();
         }
-        counts[name]++;
+        if (name) {
+          if (!counts.hasOwnProperty(name)) {
+            counts[name] = 0;
+          }
+          counts[name]++;
+        }
       }
     });
 
@@ -823,6 +871,7 @@
   }
 
   checkMonday();
+  setCenterStamp();
   drawWheel();
   renderCalendar();
 </script>
