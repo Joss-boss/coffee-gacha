@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lunch Cafe Roulette & Calendar</title>
+
+  <!-- Google Fonts & Chart.js -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      /* 참고 이미지 특유의 울퉁불퉁하고 독특한 노이즈 텍스처 배경 */
+      background: #e2ded4;
+      background-image: 
+        radial-gradient(at 10% 20%, rgba(224, 98, 88, 0.25) 0px, transparent 50%),
+        radial-gradient(at 80% 0%, rgba(77, 182, 172, 0.3) 0px, transparent 50%),
+        radial-gradient(at 90% 80%, rgba(244, 180, 26, 0.25) 0px, transparent 50%),
+        radial-gradient(at 0% 100%, rgba(26, 35, 126, 0.15) 0px, transparent 50%);
+      background-attachment: fixed;
+      margin: 0;
+      padding: 30px 15px;
+      color: #1a1a24;
+    }
+
+    .container {
+      max-width: 780px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    /* 유기적인 비대칭 모서리와 깊이감 있는 카드 스타일 */
+    .card {
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(12px);
+      border-radius: 28px 20px 32px 18px;
+      padding: 30px 25px;
+      box-shadow: 0 12px 32px rgba(26, 26, 42, 0.08), 
+                  inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+    }
+
+    .card-title {
+      margin: 0 0 20px 0;
+      font-size: 22px;
+      font-weight: 800;
+      color: #111439;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* 룰렛 스타일 */
+    .roulette-section { text-align: center; }
+    .roulette-container {
+      position: relative;
+      width: 270px;
+      height: 270px;
+      margin: 25px auto;
+    }
+
+    .pointer {
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 14px solid transparent;
+      border-right: 14px solid transparent;
+      border-top: 24px solid #111439;
+      z-index: 10;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+    }
+
+    #wheel {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      transition: transform 3.5s cubic-bezier(0.12, 0.8, 0.15, 1);
+    }
+
+    /* 감각적인 비대칭 형태의 독특한 버튼 디자인 */
+    .btn-action {
+      background: #111439;
+      color: #f7f9fc;
+      border: none;
+      padding: 14px 36px;
+      font-size: 16px;
+      font-weight: 700;
+      border-radius: 30px 12px 28px 14px;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(17, 20, 57, 0.25);
+      transition: all 0.2s ease;
+    }
+    .btn-action:hover {
+      transform: translateY(-2px) scale(1.02);
+      background: #23286b;
+      box-shadow: 0 10px 24px rgba(17, 20, 57, 0.35);
+    }
+    .btn-action:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    #result {
+      font-size: 18px;
+      font-weight: 700;
+      margin-top: 20px;
+      color: #e04850;
+      min-height: 27px;
+    }
+
+    /* 캘린더 디자인 */
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .btn-nav {
+      background: #f0eee6;
+      color: #111439;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-nav:hover { background: #e2decb; }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+    }
+
+    .day-header {
+      text-align: center;
+      font-weight: 800;
+      padding: 8px 0;
+      color: #717588;
+      font-size: 13px;
+    }
+
+    .day-cell {
+      min-height: 80px;
+      background: rgba(255, 255, 255, 0.6);
+      border: 1px solid rgba(0,0,0,0.05);
+      border-radius: 16px;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .day-number {
+      font-size: 12px;
+      font-weight: 700;
+      color: #4a4e69;
+    }
+
+    .select-cafe {
+      width: 100%;
+      font-size: 11px;
+      font-weight: 700;
+      margin-top: 6px;
+      padding: 4px;
+      border-radius: 8px;
+      border: 1px solid #dcd8c8;
+      background: #ffffff;
+      color: #111439;
+      outline: none;
+    }
+
+    .empty-cell { background: transparent; border: none; }
+
+    /* 차트 영역 */
+    .chart-container {
+      position: relative;
+      height: 240px;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- 룰렛 섹션 -->
+  <div class="card roulette-section">
+    <h2 class="card-title" style="justify-content: center;">🎨 Today's Cafe Roulette</h2>
+    <div class="roulette-container">
+      <div class="pointer"></div>
+      <canvas id="wheel" width="270" height="270"></canvas>
+    </div>
+    <button class="btn-action" id="spin-btn" onclick="spinWheel()">SPIN THE WHEEL</button>
+    <div id="result">버튼을 눌러 오늘 갈 카페를 뽑아보세요!</div>
+  </div>
+
+  <!-- 캘린더 섹션 -->
+  <div class="card">
+    <div class="calendar-header">
+      <button class="btn-nav" onclick="changeMonth(-1)">◀ Prev</button>
+      <h3 class="card-title" id="month-title" style="margin:0;"></h3>
+      <button class="btn-nav" onclick="changeMonth(1)">Next ▶</button>
+    </div>
+    <div class="calendar-grid" id="calendar-grid"></div>
+  </div>
+
+  <!-- 차트 통계 섹션 -->
+  <div class="card">
+    <h2 class="card-title">📊 Visit Statistics</h2>
+    <div class="chart-container">
+      <canvas id="visitChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 아트워크 색상 팔레트 적용 (딥 네이비, 레드, 민트, 테라코타, 퍼플)
+  const allCafes = ["베르시", "카인드오브브루", "우지커피", "옾튼", "아프리쿠스"];
+  const colors = ["#e04850", "#4db6ac", "#f4b41a", "#111439", "#8e24aa"];
+  const textColors = ["#ffffff", "#ffffff", "#111439", "#ffffff", "#ffffff"];
+  
+  let activeCafes = [...allCafes];
+  let currentRotation = 0;
+  let isSpinning = false;
+  let chartInstance = null;
+
+  function checkMonday() {
+    const today = new Date();
+    if (today.getDay() === 1) {
+      activeCafes = allCafes.filter(c => c !== "베르시");
+    } else {
+      activeCafes = [...allCafes];
+    }
+  }
+
+  function drawWheel() {
+    const canvas = document.getElementById("wheel");
+    const ctx = canvas.getContext("2d");
+    const numOptions = activeCafes.length;
+    const arc = (2 * Math.PI) / numOptions;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    for (let i = 0; i < numOptions; i++) {
+      const angle = i * arc;
+      ctx.beginPath();
+      ctx.fillStyle = colors[i % colors.length];
+      ctx.moveTo(135, 135);
+      ctx.arc(135, 135, 135, angle, angle + arc);
+      ctx.fill();
+
+      ctx.save();
+      ctx.translate(135, 135);
+      ctx.rotate(angle + arc / 2);
+      ctx.textAlign = "right";
+      ctx.fillStyle = textColors[i % textColors.length];
+      ctx.font = "bold 14px 'Plus Jakarta Sans', sans-serif";
+      ctx.fillText(activeCafes[i], 115, 5);
+      ctx.restore();
+    }
+  }
+
+  function spinWheel() {
+    if (isSpinning) return;
+    isSpinning = true;
+    document.getElementById("spin-btn").disabled = true;
+
+    const canvas = document.getElementById("wheel");
+    const numOptions = activeCafes.length;
+    const randomDegrees = Math.floor(Math.random() * 360) + 1800;
+    currentRotation += randomDegrees;
+
+    canvas.style.transform = `rotate(${currentRotation}deg)`;
+
+    setTimeout(() => {
+      isSpinning = false;
+      document.getElementById("spin-btn").disabled = false;
+
+      const actualRotation = currentRotation % 360;
+      const degreesPerSegment = 360 / numOptions;
+      let winningIndex = Math.floor((360 - (actualRotation % 360) + 270) % 360 / degreesPerSegment);
+      const selectedCafe = activeCafes[winningIndex];
+
+      const today = new Date();
+      let noteText = today.getDay() === 1 ? " (월요일이라 베르시는 제외했어요!)" : "";
+      
+      document.getElementById("result").innerText = `✨ 오늘 추천 카페: [ ${selectedCafe} ]` + noteText;
+    }, 3500);
+  }
+
+  // ------------------ 캘린더 ------------------
+  let currentDate = new Date();
+
+  function renderCalendar() {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+
+    document.getElementById("month-title").innerText = `${year}. ${String(month + 1).padStart(2, '0')}`;
+
+    const grid = document.getElementById("calendar-grid");
+    grid.innerHTML = "";
+
+    const days = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+    days.forEach(day => {
+      const header = document.createElement("div");
+      header.className = "day-header";
+      header.innerText = day;
+      grid.appendChild(header);
+    });
+
+    const firstDay = new Date(year, month, 1).getDay();
+    const lastDate = new Date(year, month + 1, 0).getDate();
+
+    for (let i = 0; i < firstDay; i++) {
+      const empty = document.createElement("div");
+      empty.className = "day-cell empty-cell";
+      grid.appendChild(empty);
+    }
+
+    for (let date = 1; date <= lastDate; date++) {
+      const cell = document.createElement("div");
+      cell.className = "day-cell";
+
+      const dateNum = document.createElement("div");
+      dateNum.className = "day-number";
+      dateNum.innerText = date;
+      cell.appendChild(dateNum);
+
+      const dateKey = `cafe_log_${year}-${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
+      const savedCafe = localStorage.getItem(dateKey) || "";
+
+      const select = document.createElement("select");
+      select.className = "select-cafe";
+      
+      const defaultOpt = document.createElement("option");
+      defaultOpt.value = "";
+      defaultOpt.innerText = "Select";
+      select.appendChild(defaultOpt);
+
+      allCafes.forEach(cafe => {
+        const opt = document.createElement("option");
+        opt.value = cafe;
+        opt.innerText = cafe;
+        if (cafe === savedCafe) opt.selected = true;
+        select.appendChild(opt);
+      });
+
+      select.onchange = (e) => {
+        const val = e.target.value;
+        if (val) {
+          localStorage.setItem(dateKey, val);
+        } else {
+          localStorage.removeItem(dateKey);
+        }
+        updateChart();
+      };
+
+      cell.appendChild(select);
+      grid.appendChild(cell);
+    }
+  }
+
+  function changeMonth(delta) {
+    currentDate.setMonth(currentDate.getMonth() + delta);
+    renderCalendar();
+  }
+
+  // ------------------ 차트 ------------------
+  function updateChart() {
+    const counts = {};
+    allCafes.forEach(cafe => counts[cafe] = 0);
+
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key.startsWith("cafe_log_")) {
+        const cafeName = localStorage.getItem(key);
+        if (counts.hasOwnProperty(cafeName)) {
+          counts[cafeName]++;
+        }
+      }
+    }
+
+    const dataValues = allCafes.map(cafe => counts[cafe]);
+
+    if (chartInstance) {
+      chartInstance.data.datasets[0].data = dataValues;
+      chartInstance.update();
+    } else {
+      const ctx = document.getElementById('visitChart').getContext('2d');
+      chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: allCafes,
+          datasets: [{
+            label: 'Visits',
+            data: dataValues,
+            backgroundColor: colors,
+            borderRadius: 12,
+            borderSkipped: false
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { stepSize: 1, color: '#717588' },
+              grid: { color: 'rgba(0, 0, 0, 0.04)' }
+            },
+            x: {
+              ticks: { color: '#111439', font: { weight: 'bold' } },
+              grid: { display: false }
+            }
+          },
+          plugins: {
+            legend: { display: false }
+          }
+        }
+      });
+    }
+  }
+
+  checkMonday();
+  drawWheel();
+  renderCalendar();
+  updateChart();
+</script>
+
+</body>
+</html>
