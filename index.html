@@ -419,9 +419,10 @@
 </div>
 
 <script>
-  const rouletteCafes = ["베르시", "카인드오브브루", "우지커피", "옾튼", "아프리쿠스"];
-  const colors = ["#d32f2f", "#1976d2", "#388e3c", "#7b1fa2", "#f4b41a"];
-  const textColors = ["#ffffff", "#ffffff", "#ffffff", "#ffffff", "#111439"];
+  // 글란츠, 컴포즈 추가 완료
+  const rouletteCafes = ["베르시", "카인드오브브루", "우지커피", "옾튼", "아프리쿠스", "글란츠", "컴포즈"];
+  const colors = ["#d32f2f", "#1976d2", "#388e3c", "#7b1fa2", "#f4b41a", "#00838f", "#c2185b"];
+  const textColors = ["#ffffff", "#ffffff", "#ffffff", "#ffffff", "#111439", "#ffffff", "#ffffff"];
   
   // 캐릭터 원형 스탬프 SVG
   const stampSVGs = [
@@ -525,7 +526,7 @@
       ctx.rotate(angle + arc / 2);
       ctx.textAlign = "right";
       ctx.fillStyle = textColors[i % textColors.length] || "#ffffff";
-      ctx.font = "bold 15px 'Plus Jakarta Sans', sans-serif";
+      ctx.font = "bold 14px 'Plus Jakarta Sans', sans-serif";
       ctx.fillText(activeCafes[i], 120, 5);
       ctx.restore();
     }
